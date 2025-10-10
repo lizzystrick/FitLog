@@ -1,0 +1,6 @@
+@SummaryWorker_HostAddress = http://localhost:5211
+
+GET {{SummaryWorker_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
