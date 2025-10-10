@@ -7,6 +7,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WorkoutService", "WorkoutSe
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SummaryWorker", "SummaryWorker\SummaryWorker.csproj", "{6C373FE0-98CB-4141-BF5B-3A3263B3308B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AuthService", "AuthService\AuthService.csproj", "{027D4D7F-5338-4C04-B426-3D58C588A8B5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ApiGateway", "ApiGateway\ApiGateway.csproj", "{A9B3726C-E3B8-45BA-9225-35A1AB3A8498}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +25,14 @@ Global
 		{6C373FE0-98CB-4141-BF5B-3A3263B3308B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6C373FE0-98CB-4141-BF5B-3A3263B3308B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6C373FE0-98CB-4141-BF5B-3A3263B3308B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{027D4D7F-5338-4C04-B426-3D58C588A8B5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{027D4D7F-5338-4C04-B426-3D58C588A8B5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{027D4D7F-5338-4C04-B426-3D58C588A8B5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{027D4D7F-5338-4C04-B426-3D58C588A8B5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A9B3726C-E3B8-45BA-9225-35A1AB3A8498}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A9B3726C-E3B8-45BA-9225-35A1AB3A8498}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A9B3726C-E3B8-45BA-9225-35A1AB3A8498}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A9B3726C-E3B8-45BA-9225-35A1AB3A8498}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
