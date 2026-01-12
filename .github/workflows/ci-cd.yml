@@ -1,9 +1,8 @@
-name: CI/CD WorkoutService
+name: CD - Build & Push Image
 
 on:
   push:
-    branches:
-      - main
+    branches: [ "main" ]
 
 jobs:
   build-and-push:
