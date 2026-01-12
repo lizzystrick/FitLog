@@ -26,6 +26,6 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: WorkoutService/Dockerfile
+          file: FitLog/FitLog/WorkoutService/Dockerfile
           push: true
           tags: lizzystrick/workoutservice:latest
