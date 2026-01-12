@@ -17,13 +17,13 @@ jobs:
           dotnet-version: '8.0.x'
 
       - name: Restore
-        run: dotnet restore
+        run: dotnet restore FitLog/WorkoutService/WorkoutService.sln
 
       - name: Build
-        run: dotnet build --no-restore -c Release
+        run: dotnet build FitLog/WorkoutService/WorkoutService.sln -c Release --no-restore
 
       - name: Test
-        run: dotnet test --no-build -c Release -v minimal --logger "trx;LogFileName=test_results.trx"
+        run: dotnet test FitLog/WorkoutService/WorkoutService.sln -c Release --no-build -v minimal --logger "trx;LogFileName=test_results.trx"
 
       - name: Upload test results (TRX)
         if: always()
