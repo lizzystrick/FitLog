@@ -12,10 +12,12 @@ namespace WorkoutService.Controllers;
 public class WorkoutsController : ControllerBase
 {
     private readonly WorkoutServiceLogic _logic;
+    private readonly Messaging.RabbitMqPublisher _publisher;
 
-    public WorkoutsController(WorkoutServiceLogic logic)
+    public WorkoutsController(WorkoutServiceLogic logic, Messaging.RabbitMqPublisher publisher)
     {
         _logic = logic;
+        _publisher = publisher;
     }
 
     [HttpPost]
@@ -53,7 +55,7 @@ if (string.IsNullOrWhiteSpace(userId))
         return Ok(workouts);
     }
 
-    [HttpDelete("me")]
+ /*   [HttpDelete("me")]
 public async Task<IActionResult> DeleteMine()
 {
     var userId =
@@ -66,5 +68,31 @@ public async Task<IActionResult> DeleteMine()
 
     await _logic.DeleteWorkoutsAsync(userId);
     return NoContent();
+}*/
+
+[HttpDelete("me")]
+public async Task<IActionResult> DeleteMine()
+{
+    var userId =
+        User.FindFirstValue(ClaimTypes.NameIdentifier)
+        ?? User.FindFirstValue("sub")
+        ?? User.FindFirstValue("userId");
+
+    if (string.IsNullOrWhiteSpace(userId))
+        return Unauthorized("Missing user id claim");
+
+    // 1) Verwijder workouts direct (GDPR: data weg)
+    await _logic.DeleteWorkoutsAsync(userId);
+
+    // 2) Publish event voor andere services (SummaryWorker)
+    var evt = new Messaging.UserDeletedEvent(
+        EventId: Guid.NewGuid(),
+        UserId: userId,
+        DeletedAtUtc: DateTime.UtcNow
+    );
+
+    _publisher.PublishUserDeleted(evt);
+
+    return NoContent(); // 204
 }
 }

@@ -11,10 +11,12 @@ namespace WorkoutService.Controllers;
 public class DevAuthController : ControllerBase
 {
     private readonly IConfiguration _config;
+    private readonly IWebHostEnvironment _env;
 
-    public DevAuthController(IConfiguration config)
+    public DevAuthController(IConfiguration config, IWebHostEnvironment env)
     {
         _config = config;
+        _env = env;
     }
 
     public record DevTokenRequest(string UserId);
@@ -23,6 +25,9 @@ public class DevAuthController : ControllerBase
     [HttpPost("/dev/token")]
     public IActionResult CreateToken([FromBody] DevTokenRequest request)
     {
+        if (!_env.IsDevelopment())
+            return NotFound();
+
         if (string.IsNullOrWhiteSpace(request.UserId))
             return BadRequest("UserId is required");
 

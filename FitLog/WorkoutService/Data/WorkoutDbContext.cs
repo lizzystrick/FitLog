@@ -10,4 +10,5 @@ public class WorkoutDbContext : DbContext
     }
 
     public DbSet<Workout> Workouts => Set<Workout>();
+    public DbSet<Users> Users => Set<Users>();
 }

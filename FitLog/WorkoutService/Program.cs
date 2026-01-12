@@ -25,7 +25,7 @@ var issuer = jwtSection["Issuer"];
 var audience = jwtSection["Audience"];
 var key = jwtSection["Key"];
 
-
+builder.Services.AddHostedService<UserDeletedConsumer>();
 builder.Services.AddScoped<WorkoutServiceLogic>();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -106,3 +106,4 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+public partial class Program { }
