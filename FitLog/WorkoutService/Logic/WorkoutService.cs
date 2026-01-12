@@ -8,9 +8,9 @@ namespace WorkoutService.Logic;
 public class WorkoutServiceLogic
 {
     private readonly WorkoutDbContext _db;
-    private readonly RabbitMqPublisher _publisher;
+    private readonly IEventPublisher _publisher;
 
-    public WorkoutServiceLogic(WorkoutDbContext db, RabbitMqPublisher publisher)
+    public WorkoutServiceLogic(WorkoutDbContext db, IEventPublisher publisher)
     {
         _db = db;
         _publisher = publisher;
