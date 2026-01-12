@@ -1,10 +1,11 @@
 using System.Text;
 using System.Text.Json;
 using RabbitMQ.Client;
+using RabbitMQ.Client;
 
 namespace WorkoutService.Messaging;
 
-public class RabbitMqPublisher
+public class RabbitMqPublisher : IEventPublisher
 {
     private readonly ConnectionFactory _factory;
 
@@ -43,12 +44,10 @@ public class RabbitMqPublisher
     using var connection = _factory.CreateConnection();
     using var channel = connection.CreateModel();
 
-    channel.QueueDeclare(
-        queue: "user.deleted",
-        durable: true,
-        exclusive: false,
-        autoDelete: false,
-        arguments: null);
+    const string exchange = "fitlog.events";
+    const string routingKey = "user.deleted";
+
+    channel.ExchangeDeclare(exchange: exchange, type: ExchangeType.Topic, durable: true);
 
     var json = JsonSerializer.Serialize(evt);
     var body = Encoding.UTF8.GetBytes(json);

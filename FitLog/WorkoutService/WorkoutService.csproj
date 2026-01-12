@@ -23,6 +23,14 @@
 
   <ItemGroup>
     <Folder Include="Logic\" />
+
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Exclude test project folder from main web project compilation -->
+    <Compile Remove="WorkoutService.Tests\**\*.cs" />
+    <EmbeddedResource Remove="WorkoutService.Tests\**\*" />
+    <None Remove="WorkoutService.Tests\**\*" />
+    <Content Remove="WorkoutService.Tests\**\*" />
   </ItemGroup>
 
 </Project>

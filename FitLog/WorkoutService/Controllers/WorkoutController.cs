@@ -81,6 +81,8 @@ public async Task<IActionResult> DeleteMine()
     if (string.IsNullOrWhiteSpace(userId))
         return Unauthorized("Missing user id claim");
 
+        var eventId = Guid.NewGuid();
+
     // 1) Verwijder workouts direct (GDPR: data weg)
     await _logic.DeleteWorkoutsAsync(userId);
 
