@@ -1,7 +1,9 @@
 name: ci
 on:
   push:
+    branches: [ "main" ]
   pull_request:
+    branches: [ "main" ]
 
 jobs:
   test:
@@ -20,4 +22,11 @@ jobs:
         run: dotnet build --no-restore -c Release
 
       - name: Test
-        run: dotnet test --no-build -c Release -v minimal
+        run: dotnet test --no-build -c Release -v minimal --logger "trx;LogFileName=test_results.trx"
+
+      - name: Upload test results (TRX)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: "**/test_results.trx"
