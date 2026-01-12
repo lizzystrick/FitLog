@@ -21,6 +21,18 @@ public class WorkoutServiceLogic
         if (request.DurationMinutes <= 0)
             throw new ArgumentException("DurationMinutes must be greater than 0.");
 
+var user = await _db.Users.FindAsync(userId);
+
+if (user == null)
+{
+    _db.Users.Add(new Users { Id = userId, IsDeleted = false });
+    await _db.SaveChangesAsync();
+}
+else if (user.IsDeleted)
+{
+    throw new UnauthorizedAccessException("User is deleted");
+}
+
         var workout = new Workout
         {
             Id = Guid.NewGuid(),
@@ -41,6 +53,13 @@ public class WorkoutServiceLogic
 
         return workout.Id;
     }
+
+    public async Task EnsureUserActiveAsync(string userId)
+{
+    var user = await _db.Users.FindAsync(userId);
+    if (user != null && user.IsDeleted)
+        throw new UnauthorizedAccessException("User is deleted");
+}
 
     public async Task<List<Workout>> GetWorkoutsAsync(string userId)
     {

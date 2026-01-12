@@ -37,4 +37,29 @@ public class RabbitMqPublisher
             basicProperties: props,
             body: body);
     }
+
+    public void PublishUserDeleted(UserDeletedEvent evt)
+{
+    using var connection = _factory.CreateConnection();
+    using var channel = connection.CreateModel();
+
+    channel.QueueDeclare(
+        queue: "user.deleted",
+        durable: true,
+        exclusive: false,
+        autoDelete: false,
+        arguments: null);
+
+    var json = JsonSerializer.Serialize(evt);
+    var body = Encoding.UTF8.GetBytes(json);
+
+    var props = channel.CreateBasicProperties();
+    props.Persistent = true;
+
+    channel.BasicPublish(
+        exchange: "",
+        routingKey: "user.deleted",
+        basicProperties: props,
+        body: body);
+}
 }
