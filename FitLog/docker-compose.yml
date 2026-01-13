@@ -1,6 +1,16 @@
 version: "3.9"
 
 services:
+  mongodb:
+    image: mongo:7
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: fitlog_summary
+    volumes:
+      - mongo_data:/data/db
+
   postgres:
     image: postgres:16
     container_name: fitlog-postgres
@@ -48,6 +58,21 @@ services:
       rabbitmq:
         condition: service_healthy
 
+  summaryworker:
+    build:
+      context: .
+      dockerfile: SummaryWorker/Dockerfile
+    container_name: fitlog-summaryworker
+    environment:
+      RABBITMQ_HOST: rabbitmq
+      MONGO_CONN: "mongodb://mongodb:27017"
+      MONGO_DB: "fitlog_summary"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      mongodb:
+        condition: service_started
+
   rabbitmq-exporter:
     image: kbudde/rabbitmq-exporter:latest
     container_name: fitlog-rabbitmq-exporter
@@ -85,3 +110,4 @@ services:
 
 volumes:
   fitlog_postgres_data:
+  mongo_data:

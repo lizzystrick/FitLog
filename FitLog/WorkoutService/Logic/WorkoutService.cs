@@ -46,9 +46,11 @@ else if (user.IsDeleted)
 
         _publisher.PublishWorkoutUploaded(new WorkoutUploadedEvent
         {
-            WorkoutId = workout.Id,
-            UserId = userId,
-            OccurredAtUtc = DateTime.UtcNow
+            EventId = Guid.NewGuid(),
+    WorkoutId = workout.Id,
+    UserId = userId,
+    DurationMinutes = workout.DurationMinutes,
+    OccurredAtUtc = DateTime.UtcNow
         });
 
         return workout.Id;

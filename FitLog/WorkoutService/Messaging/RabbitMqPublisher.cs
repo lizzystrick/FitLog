@@ -44,10 +44,12 @@ public class RabbitMqPublisher : IEventPublisher
     using var connection = _factory.CreateConnection();
     using var channel = connection.CreateModel();
 
-    const string exchange = "fitlog.events";
-    const string routingKey = "user.deleted";
-
-    channel.ExchangeDeclare(exchange: exchange, type: ExchangeType.Topic, durable: true);
+    channel.QueueDeclare(
+        queue: "user.deleted",
+        durable: true,
+        exclusive: false,
+        autoDelete: false,
+        arguments: null);
 
     var json = JsonSerializer.Serialize(evt);
     var body = Encoding.UTF8.GetBytes(json);

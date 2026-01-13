@@ -13,7 +13,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<WorkoutDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("WorkoutDb")));
 builder.Services.AddControllers();
-builder.Services.AddSingleton(sp =>
+builder.Services.AddSingleton<IEventPublisher>(sp =>
 {
     var config = sp.GetRequiredService<IConfiguration>();
     var host = config["RabbitMq:Host"] ?? "localhost";

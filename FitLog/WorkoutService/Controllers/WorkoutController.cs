@@ -2,7 +2,8 @@ using Microsoft.AspNetCore.Mvc;
 using WorkoutService.Logic;
 using WorkoutService.Models;
 using Microsoft.AspNetCore.Authorization;
-using System.Security.Claims; 
+using System.Security.Claims;
+using WorkoutService.Messaging;
 
 namespace WorkoutService.Controllers;
 
@@ -12,9 +13,9 @@ namespace WorkoutService.Controllers;
 public class WorkoutsController : ControllerBase
 {
     private readonly WorkoutServiceLogic _logic;
-    private readonly Messaging.RabbitMqPublisher _publisher;
+    private readonly IEventPublisher _publisher;
 
-    public WorkoutsController(WorkoutServiceLogic logic, Messaging.RabbitMqPublisher publisher)
+    public WorkoutsController(WorkoutServiceLogic logic, IEventPublisher publisher)
     {
         _logic = logic;
         _publisher = publisher;
@@ -81,12 +82,10 @@ public async Task<IActionResult> DeleteMine()
     if (string.IsNullOrWhiteSpace(userId))
         return Unauthorized("Missing user id claim");
 
-        var eventId = Guid.NewGuid();
-
-    // 1) Verwijder workouts direct (GDPR: data weg)
+        // 1) Verwijder workouts van deze user (GDPR)
     await _logic.DeleteWorkoutsAsync(userId);
 
-    // 2) Publish event voor andere services (SummaryWorker)
+    // 2) Publish user.deleted event voor andere services
     var evt = new Messaging.UserDeletedEvent(
         EventId: Guid.NewGuid(),
         UserId: userId,
@@ -95,6 +94,6 @@ public async Task<IActionResult> DeleteMine()
 
     _publisher.PublishUserDeleted(evt);
 
-    return NoContent(); // 204
+    return NoContent();
 }
 }
