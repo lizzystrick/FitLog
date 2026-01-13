@@ -86,7 +86,11 @@ builder.Services
 builder.Services.AddAuthorization();
 
 var app = builder.Build();
-
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<WorkoutDbContext>();
+    db.Database.Migrate();
+}
 // Swagger aan in Development
 
 app.UseSwagger();
