@@ -6,6 +6,7 @@ using Microsoft.OpenApi.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Prometheus;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -104,6 +105,8 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.UseHttpMetrics(); // meet automatisch HTTP requests
+app.MapMetrics();   
 
 app.Run();
 public partial class Program { }

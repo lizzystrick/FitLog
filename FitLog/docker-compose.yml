@@ -80,8 +80,12 @@ services:
       GF_SECURITY_ADMIN_PASSWORD: "admin"
     ports:
       - "3000:3000"
+    volumes:
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
     depends_on:
       - prometheus
 
 volumes:
   fitlog_postgres_data:
+  mongo_data:
+
