@@ -4,6 +4,7 @@ using Xunit;
 using WorkoutService.Logic;
 using WorkoutService.Models;
 using System;
+using WorkoutService.Messaging;
 
 public class CreateWorkoutTests
 {

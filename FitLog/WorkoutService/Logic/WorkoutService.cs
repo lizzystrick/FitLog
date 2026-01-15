@@ -49,6 +49,7 @@ else if (user.IsDeleted)
         {
             WorkoutId = workout.Id,
             UserId = userId,
+            DurationMinutes = workout.DurationMinutes,
             OccurredAtUtc = DateTime.UtcNow
         });
 
