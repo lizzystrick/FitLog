@@ -20,7 +20,9 @@ public class UserDeletedConsumer : BackgroundService
         _serviceProvider = serviceProvider;
 
         // Zelfde config style als je publisher:
-        var host = config["RabbitMq:Host"] ?? "localhost";
+        var host = Environment.GetEnvironmentVariable("RABBITMQ_HOST")
+           ?? config["RabbitMq:Host"]
+           ?? "rabbitmq";
         _factory = new ConnectionFactory
         {
             HostName = host,
@@ -28,25 +30,41 @@ public class UserDeletedConsumer : BackgroundService
         };
     }
 
-    public override Task StartAsync(CancellationToken cancellationToken)
+    public override async Task StartAsync(CancellationToken cancellationToken)
+{
+    const int maxAttempts = 10;
+
+    for (var attempt = 1; attempt <= maxAttempts; attempt++)
     {
-        _connection = _factory.CreateConnection();
-        _channel = _connection.CreateModel();
-
-        _channel.QueueDeclare(
-            queue: QueueName,
-            durable: true,
-            exclusive: false,
-            autoDelete: false,
-            arguments: null);
-
-        // 1 tegelijk = makkelijker debuggen + stabieler
-        _channel.BasicQos(0, 1, false);
-
-        Console.WriteLine("[WorkoutService] UserDeletedConsumer listening on 'user.deleted'...");
-
-        return base.StartAsync(cancellationToken);
+        try
+        {
+            _connection = _factory.CreateConnection();
+            _channel = _connection.CreateModel();
+            break;
+        }
+        catch (Exception ex) when (attempt < maxAttempts)
+        {
+            Console.WriteLine($"[WorkoutService] RabbitMQ not ready (attempt {attempt}/{maxAttempts}): {ex.Message}");
+            await Task.Delay(TimeSpan.FromSeconds(2), cancellationToken);
+        }
     }
+
+    if (_channel is null)
+        throw new InvalidOperationException("[WorkoutService] RabbitMQ channel could not be initialized.");
+
+    _channel.QueueDeclare(
+        queue: QueueName,
+        durable: true,
+        exclusive: false,
+        autoDelete: false,
+        arguments: null);
+
+    _channel.BasicQos(0, 1, false);
+
+    Console.WriteLine("[WorkoutService] UserDeletedConsumer listening on 'user.deleted'...");
+
+    await base.StartAsync(cancellationToken);
+}
 
     protected override Task ExecuteAsync(CancellationToken stoppingToken)
     {

@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using WorkoutService.Data;
 using WorkoutService.Messaging;
 using WorkoutService.Models;
-
+using WorkoutService.Observability;
 namespace WorkoutService.Logic;
 
 public class WorkoutServiceLogic
@@ -43,11 +43,13 @@ else if (user.IsDeleted)
 
         _db.Workouts.Add(workout);
         await _db.SaveChangesAsync();
+        Metrics.WorkoutsCreated.Inc();
 
         _publisher.PublishWorkoutUploaded(new WorkoutUploadedEvent
         {
             WorkoutId = workout.Id,
             UserId = userId,
+            DurationMinutes = workout.DurationMinutes,
             OccurredAtUtc = DateTime.UtcNow
         });
 
