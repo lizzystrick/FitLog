@@ -2,7 +2,9 @@ using Microsoft.AspNetCore.Mvc;
 using WorkoutService.Logic;
 using WorkoutService.Models;
 using Microsoft.AspNetCore.Authorization;
-using System.Security.Claims; 
+using System.Security.Claims;
+using WorkoutService.Messaging;
+using WorkoutService.Observability;
 
 
 namespace WorkoutService.Controllers;
@@ -95,6 +97,7 @@ public async Task<IActionResult> DeleteMine()
     );
 
     _publisher.PublishUserDeleted(evt);
+    Metrics.UsersDeleted.Inc();
 
     return NoContent(); // 204
 }
