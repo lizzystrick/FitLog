@@ -1,16 +1,37 @@
-name: CD - Build & Push Image
+name: CD - Build, Push & Deploy (ACA)
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
 
 jobs:
-  build-and-push:
+  build-test:
     runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Restore
+        run: dotnet restore FitLog/WorkoutService/WorkoutService.sln
+
+      - name: Build
+        run: dotnet build FitLog/WorkoutService/WorkoutService.sln -c Release --no-restore
+
+      - name: Test
+        run: dotnet test FitLog/WorkoutService/WorkoutService.sln -c Release --no-build -v minimal
+
+  docker-push-deploy:
+    needs: build-test
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -21,10 +42,30 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push Docker image
+      - name: Build and push Docker image (latest + sha)
         uses: docker/build-push-action@v5
         with:
-          context: FitLog
+          context: .
           file: FitLog/WorkoutService/Dockerfile
           push: true
-          tags: lizzystrick/workoutservice:latest
+          tags: |
+            lizzystrick/workoutservice:latest
+            lizzystrick/workoutservice:${{ github.sha }}
+
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy to Azure Container Apps
+        uses: azure/container-apps-deploy-action@v2
+        with:
+          resourceGroup: fitlog
+          containerAppName: ca-workoutservice
+          imageToDeploy: lizzystrick/workoutservice:${{ github.sha }}
+
+      - name: Smoke test /health
+        run: |
+          curl -f "${{ secrets.ACA_URL }}/health"
