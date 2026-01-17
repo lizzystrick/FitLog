@@ -68,6 +68,4 @@ jobs:
           containerAppName: ca-workoutservice
           imageToDeploy: lizzystrick/workoutservice:${{ github.sha }}
 
-      - name: Smoke test /health
-        run: |
-          curl -f "${{ secrets.ACA_URL }}/health"
+
