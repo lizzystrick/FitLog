@@ -17,17 +17,28 @@ public class UserDeletedConsumer : BackgroundService
 
     public UserDeletedConsumer(IServiceProvider serviceProvider, IConfiguration config)
     {
-        _serviceProvider = serviceProvider;
+            _serviceProvider = serviceProvider;
 
-        // Zelfde config style als je publisher:
-        var host = Environment.GetEnvironmentVariable("RABBITMQ_HOST")
-           ?? config["RabbitMq:Host"]
-           ?? "rabbitmq";
-        _factory = new ConnectionFactory
+    var host = Environment.GetEnvironmentVariable("RabbitMq__Host") ?? "rabbitmq";
+    var username = Environment.GetEnvironmentVariable("RabbitMq__Username") ?? "fitlog";
+    var password = Environment.GetEnvironmentVariable("RabbitMq__Password") ?? "fitlog_pw";
+
+    var port = int.TryParse(Environment.GetEnvironmentVariable("RabbitMq__Port"), out var p) ? p : 5672;
+    var useTls = bool.TryParse(Environment.GetEnvironmentVariable("RabbitMq__UseTls"), out var tls) && tls;
+
+    _factory = new ConnectionFactory
+    {
+        HostName = host,
+        Port = port,
+        UserName = username,
+        Password = password,
+        DispatchConsumersAsync = true,
+        Ssl = new SslOption
         {
-            HostName = host,
-            DispatchConsumersAsync = true
-        };
+            Enabled = useTls,
+            ServerName = host // belangrijk voor CloudAMQP (TLS/SNI)
+        }
+    };
     }
 
     public override async Task StartAsync(CancellationToken cancellationToken)
