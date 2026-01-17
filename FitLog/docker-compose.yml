@@ -21,6 +21,9 @@ services:
   rabbitmq:
     image: rabbitmq:3-management
     container_name: fitlog-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: fitlog
+      RABBITMQ_DEFAULT_PASS: fitlog_pw
     ports:
       - "5672:5672"
       - "15672:15672"
@@ -40,6 +43,8 @@ services:
       ASPNETCORE_URLS: "http://+:8080"
       ConnectionStrings__WorkoutDb: "Host=postgres;Port=5432;Database=fitlog;Username=fitlog;Password=fitlog_pw"
       RabbitMq__Host: "rabbitmq"
+      RabbitMq__Username: "fitlog"
+      RabbitMq__Password: "fitlog_pw"
     ports:
       - "5001:8080"
     depends_on:
@@ -53,11 +58,11 @@ services:
     container_name: fitlog-rabbitmq-exporter
     environment:
       RABBIT_URL: "http://rabbitmq:15672"
-      RABBIT_USER: "guest"
-      RABBIT_PASSWORD: "guest"
+      RABBIT_USER: "fitlog"
+      RABBIT_PASSWORD: "fitlog_pw"
       PUBLISH_PORT: "9419"
     ports:
-      - "9419:9419"
+    - "9419:9419"
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -67,6 +72,7 @@ services:
     container_name: fitlog-prometheus
     volumes:
       - ./observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
     ports:
       - "9090:9090"
     depends_on:
@@ -81,11 +87,13 @@ services:
     ports:
       - "3000:3000"
     volumes:
+      - grafana_data:/var/lib/grafana
       - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
     depends_on:
       - prometheus
 
 volumes:
   fitlog_postgres_data:
-  mongo_data:
+  grafana_data:
+  prometheus_data:
 

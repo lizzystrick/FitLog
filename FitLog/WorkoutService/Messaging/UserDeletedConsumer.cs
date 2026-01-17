@@ -17,7 +17,7 @@ public class UserDeletedConsumer : BackgroundService
 
     public UserDeletedConsumer(IServiceProvider serviceProvider, IConfiguration config)
     {
-        _serviceProvider = serviceProvider;
+            _serviceProvider = serviceProvider;
 
     var host = Environment.GetEnvironmentVariable("RabbitMq__Host") ?? "rabbitmq";
     var username = Environment.GetEnvironmentVariable("RabbitMq__Username") ?? "fitlog";

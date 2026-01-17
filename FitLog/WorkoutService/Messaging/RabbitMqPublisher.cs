@@ -18,7 +18,6 @@ public class RabbitMqPublisher : IEventPublisher
         var username = Environment.GetEnvironmentVariable("RabbitMq__Username") ?? "fitlog";
         var password = Environment.GetEnvironmentVariable("RabbitMq__Password") ?? "fitlog_pw";
         var vhost = Environment.GetEnvironmentVariable("RabbitMq__VirtualHost") ?? "/";
-
         // cloud-ready defaults:
         // local -> 5672 + no TLS
         // CloudAMQP -> 5671 + TLS
@@ -32,6 +31,7 @@ public class RabbitMqPublisher : IEventPublisher
             UserName = username,
             Password = password,
             VirtualHost = vhost, 
+
             DispatchConsumersAsync = true,
             Ssl = new SslOption
             {
@@ -39,7 +39,6 @@ public class RabbitMqPublisher : IEventPublisher
                 ServerName = host // belangrijk voor CloudAMQP (TLS/SNI)
             }
         };
-
     }
 
     public void PublishWorkoutUploaded(WorkoutUploadedEvent evt)
