@@ -11,7 +11,29 @@ public class RabbitMqPublisher : IEventPublisher
 
     public RabbitMqPublisher(string hostName)
     {
-        _factory = new ConnectionFactory { HostName = hostName };
+        var host = Environment.GetEnvironmentVariable("RabbitMq__Host") ?? "rabbitmq";
+        var username = Environment.GetEnvironmentVariable("RabbitMq__Username") ?? "fitlog";
+        var password = Environment.GetEnvironmentVariable("RabbitMq__Password") ?? "fitlog_pw";
+
+        // cloud-ready defaults:
+        // local -> 5672 + no TLS
+        // CloudAMQP -> 5671 + TLS
+        var port = int.TryParse(Environment.GetEnvironmentVariable("RabbitMq__Port"), out var p) ? p : 5672;
+        var useTls = bool.TryParse(Environment.GetEnvironmentVariable("RabbitMq__UseTls"), out var tls) && tls;
+
+        _factory = new ConnectionFactory
+        {
+            HostName = host,
+            Port = port,
+            UserName = username,
+            Password = password,
+            DispatchConsumersAsync = true,
+            Ssl = new SslOption
+            {
+                Enabled = useTls,
+                ServerName = host // belangrijk voor CloudAMQP (TLS/SNI)
+            }
+        };
     }
 
     public void PublishWorkoutUploaded(WorkoutUploadedEvent evt)

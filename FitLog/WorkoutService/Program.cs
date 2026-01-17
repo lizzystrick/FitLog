@@ -14,13 +14,18 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<WorkoutDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("WorkoutDb")));
 builder.Services.AddControllers();
-builder.Services.AddSingleton(sp =>
+builder.Services.AddSingleton<RabbitMqPublisher>(sp =>
 {
     var config = sp.GetRequiredService<IConfiguration>();
-    var host = config["RabbitMq:Host"] ?? "localhost";
+
+    // supports both appsettings ("RabbitMq:Host") and docker env ("RabbitMq__Host")
+    var host = config["RabbitMq__Host"] ?? config["RabbitMq:Host"] ?? "localhost";
+
     return new RabbitMqPublisher(host);
 });
 
+builder.Services.AddSingleton<IEventPublisher>(sp =>
+    sp.GetRequiredService<RabbitMqPublisher>());
 var jwtSection = builder.Configuration.GetSection("Jwt");
 var issuer = jwtSection["Issuer"];
 var audience = jwtSection["Audience"];
@@ -104,9 +109,10 @@ if (!app.Environment.IsDevelopment())
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapControllers();
+
 app.UseHttpMetrics(); // meet automatisch HTTP requests
 app.MapMetrics();   
-
+app.MapControllers();
+app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
 app.Run();
 public partial class Program { }
