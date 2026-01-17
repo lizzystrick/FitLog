@@ -44,26 +44,24 @@ public class RabbitMqPublisher : IEventPublisher
     public void PublishWorkoutUploaded(WorkoutUploadedEvent evt)
     {
         using var connection = _factory.CreateConnection();
-        using var channel = connection.CreateModel();
+    using var channel = connection.CreateModel();
 
-        channel.QueueDeclare(
-            queue: "workout.uploaded",
-            durable: true,
-            exclusive: false,
-            autoDelete: false,
-            arguments: null);
+    const string exchange = "fitlog.events";
+    const string routingKey = "workout.uploaded";
 
-        var json = JsonSerializer.Serialize(evt);
-        var body = Encoding.UTF8.GetBytes(json);
+    channel.ExchangeDeclare(exchange: exchange, type: ExchangeType.Topic, durable: true);
 
-        var props = channel.CreateBasicProperties();
-        props.Persistent = true;
+    var json = JsonSerializer.Serialize(evt);
+    var body = Encoding.UTF8.GetBytes(json);
 
-        channel.BasicPublish(
-            exchange: "",
-            routingKey: "workout.uploaded",
-            basicProperties: props,
-            body: body);
+    var props = channel.CreateBasicProperties();
+    props.Persistent = true;
+
+    channel.BasicPublish(
+        exchange: exchange,
+        routingKey: routingKey,
+        basicProperties: props,
+        body: body);
     }
 
     public void PublishUserDeleted(UserDeletedEvent evt)
@@ -83,8 +81,8 @@ public class RabbitMqPublisher : IEventPublisher
     props.Persistent = true;
 
     channel.BasicPublish(
-        exchange: "",
-        routingKey: "user.deleted",
+        exchange: exchange,
+        routingKey: routingKey,
         basicProperties: props,
         body: body);
 }

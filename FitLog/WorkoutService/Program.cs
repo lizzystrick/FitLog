@@ -32,6 +32,7 @@ var audience = jwtSection["Audience"];
 var key = jwtSection["Key"];
 
 builder.Services.AddHostedService<UserDeletedConsumer>();
+builder.Services.AddHostedService<WorkoutUploadedQueueInitializer>();
 builder.Services.AddScoped<WorkoutServiceLogic>();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
