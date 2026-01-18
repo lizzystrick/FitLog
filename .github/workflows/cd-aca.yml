@@ -25,6 +25,35 @@ jobs:
       - name: Test
         run: dotnet test FitLog/WorkoutService/WorkoutService.sln -c Release --no-build -v minimal
 
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@v3
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
+            -Dsonar.projectKey=lizzystrick_FitLog
+            -Dsonar.organization=lizzystrick
+            -Dsonar.sources=.
+            -Dsonar.host.url=https://sonarcloud.io
+
+      - name: Trivy filesystem scan
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          scan-type: "fs"
+          scan-ref: "."
+          severity: "HIGH,CRITICAL"
+          exit-code: "1"
+
+      - name: Build Docker image (local for scan)
+        run: docker build -t workoutservice:ci -f FitLog/WorkoutService/Dockerfile ./FitLog
+
+      - name: Trivy image scan
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          image-ref: "workoutservice:ci"
+          severity: "HIGH,CRITICAL"
+          exit-code: "1"  
+
   cd:
     if: github.ref == 'refs/heads/main'
     needs: ci
