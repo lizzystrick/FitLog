@@ -1,0 +1,44 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: fitlog-postgres
+    environment:
+      POSTGRES_DB: fitlog
+      POSTGRES_USER: fitlog
+      POSTGRES_PASSWORD: fitlog_pw
+    ports:
+      - "5432:5432"
+    volumes:
+      - fitlog_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fitlog -d fitlog"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  workoutservice:
+    build:
+      context: .
+      dockerfile: WorkoutService/Dockerfile
+    container_name: fitlog-workoutservice
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Development"
+      ASPNETCORE_URLS: "http://+:8080"
+      ConnectionStrings__WorkoutDb: "Host=postgres;Port=5432;Database=fitlog;Username=fitlog;Password=fitlog_pw"
+
+      RabbitMq__Host: "${CLOUDAMQP_HOST}"
+      RabbitMq__Username: "${CLOUDAMQP_USERNAME}"
+      RabbitMq__Password: "${CLOUDAMQP_PASSWORD}"
+      RabbitMq__VirtualHost: "${CLOUDAMQP_VHOST}"
+      RabbitMq__Port: "${CLOUDAMQP_PORT:-5671}"
+      RabbitMq__UseTls: "${CLOUDAMQP_TLS:-true}"
+    ports:
+      - "5001:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  fitlog_postgres_data:

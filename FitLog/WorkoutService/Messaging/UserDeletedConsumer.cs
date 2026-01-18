@@ -65,6 +65,13 @@ public class UserDeletedConsumer : BackgroundService
     if (_channel is null)
         throw new InvalidOperationException("[WorkoutService] RabbitMQ channel could not be initialized.");
 
+    const string exchange = "fitlog.events";
+    const string routingKey = "user.deleted";
+
+    // 1) Zorg dat exchange bestaat (zelfde als publisher)
+    _channel.ExchangeDeclare(exchange: exchange, type: ExchangeType.Topic, durable: true);
+
+    // 2) Declare queue
     _channel.QueueDeclare(
         queue: QueueName,
         durable: true,
@@ -72,9 +79,15 @@ public class UserDeletedConsumer : BackgroundService
         autoDelete: false,
         arguments: null);
 
+    // 3) Bind queue aan exchange + routing key
+    _channel.QueueBind(
+        queue: QueueName,
+        exchange: exchange,
+        routingKey: routingKey);
+
     _channel.BasicQos(0, 1, false);
 
-    Console.WriteLine("[WorkoutService] UserDeletedConsumer listening on 'user.deleted'...");
+    Console.WriteLine($"[WorkoutService] UserDeletedConsumer listening on '{QueueName}' (bound to {exchange}:{routingKey})...");
 
     await base.StartAsync(cancellationToken);
 }

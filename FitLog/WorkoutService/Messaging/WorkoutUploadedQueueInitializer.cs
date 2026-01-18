@@ -37,19 +37,29 @@ public class WorkoutUploadedQueueInitializer : BackgroundService
 
     public override Task StartAsync(CancellationToken cancellationToken)
     {
-        _connection = _factory.CreateConnection();
-        _channel = _connection.CreateModel();
+       _connection = _factory.CreateConnection();
+    _channel = _connection.CreateModel();
 
-        _channel.QueueDeclare(
-            queue: QueueName,
-            durable: true,
-            exclusive: false,
-            autoDelete: false,
-            arguments: null);
+    const string exchange = "fitlog.events";
+    const string routingKey = "workout.uploaded";
 
-        Console.WriteLine($"[WorkoutService] Queue ensured: '{QueueName}'");
+    _channel.ExchangeDeclare(exchange: exchange, type: ExchangeType.Topic, durable: true);
 
-        return base.StartAsync(cancellationToken);
+    _channel.QueueDeclare(
+        queue: QueueName,
+        durable: true,
+        exclusive: false,
+        autoDelete: false,
+        arguments: null);
+
+    _channel.QueueBind(
+        queue: QueueName,
+        exchange: exchange,
+        routingKey: routingKey);
+
+    Console.WriteLine($"[WorkoutService] Queue ensured + bound: '{QueueName}' -> {exchange} ({routingKey})");
+
+    return base.StartAsync(cancellationToken);
     }
 
     protected override Task ExecuteAsync(CancellationToken stoppingToken)
