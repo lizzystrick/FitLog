@@ -4,12 +4,13 @@ using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
 using MongoDB.Bson;
 using MongoDB.Driver;
+using Npgsql;
 
 namespace FitLog.Functions;
 
 public class GenerateWeeklySummary
 {
-    private readonly ILogger _logger;
+        private readonly ILogger _logger;
 
     public GenerateWeeklySummary(ILoggerFactory loggerFactory)
     {
@@ -20,42 +21,67 @@ public class GenerateWeeklySummary
     public async Task<HttpResponseData> Run(
         [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "weekly-summary")] HttpRequestData req)
     {
-        
-            var userId = "user-e";
+        var mongoUri = Environment.GetEnvironmentVariable("MONGODB_URI");
+        var pg = Environment.GetEnvironmentVariable("POSTGRES_CONNECTION_STRING");
 
-    var mongoUri = Environment.GetEnvironmentVariable("MONGODB_URI");
-    var dbName = Environment.GetEnvironmentVariable("MONGODB_DB") ?? "fitlog_summary";
-    var collectionName = Environment.GetEnvironmentVariable("MONGODB_COLLECTION") ?? "weekly_summaries";
+        if (string.IsNullOrWhiteSpace(mongoUri) || string.IsNullOrWhiteSpace(pg))
+        {
+            var bad = req.CreateResponse(HttpStatusCode.InternalServerError);
+            await bad.WriteStringAsync("Missing env vars");
+            return bad;
+        }
 
-    _logger.LogInformation("Has MONGODB_URI: {HasUri}", !string.IsNullOrWhiteSpace(mongoUri));
-    _logger.LogInformation("DB={Db} Collection={Col}", dbName, collectionName);
+        var now = DateTime.UtcNow;
+var day = (int)now.DayOfWeek;   // Sunday=0
+day = day == 0 ? 7 : day;       // Sunday -> 7
+var weekStart = now.Date.AddDays(1 - day); // Monday 00:00 UTC
+var weekEnd = weekStart.AddDays(7);
 
-    if (string.IsNullOrWhiteSpace(mongoUri))
-    {
-        var bad = req.CreateResponse(HttpStatusCode.InternalServerError);
-        await bad.WriteStringAsync("MONGODB_URI ontbreekt. Check local.settings.json -> Values -> MONGODB_URI");
-        return bad;
-    }
+        int totalMinutes = 0;
+        int workoutCount = 0;
+        string userId = "unknown";
 
-    var client = new MongoClient(mongoUri);
-    var db = client.GetDatabase(dbName);
-    var col = db.GetCollection<BsonDocument>(collectionName);
+        // 2️⃣ SUPERSIMPE Postgres query
+        await using var conn = new NpgsqlConnection(pg);
+        await conn.OpenAsync();
 
-    var doc = new BsonDocument
-    {
-        { "UserId", userId },
-        { "WeekStartUtc", DateTime.UtcNow.Date },
-        { "TotalMinutes", 120 },
-        { "WorkoutCount", 3 },
-        { "UpdatedAtUtc", DateTime.UtcNow }
-    };
+        var sql = @"
+SELECT COUNT(*)::int, COALESCE(SUM(""DurationMinutes""),0)::int
+FROM ""Workouts""
+WHERE ""Date"" >= @start AND ""Date"" < @end;
+";
 
-    await col.InsertOneAsync(doc);
+        await using var cmd = new NpgsqlCommand(sql, conn);
+        cmd.Parameters.AddWithValue("start", weekStart);
+        cmd.Parameters.AddWithValue("end", weekEnd);
 
-    _logger.LogInformation("Inserted summary for {UserId} into Atlas", userId);
+        await using var reader = await cmd.ExecuteReaderAsync();
+if (await reader.ReadAsync())
+{
+    workoutCount = reader.GetInt32(0);
+    totalMinutes = reader.GetInt32(1);
+    userId = "ALL_USERS";
+}
 
-    var ok = req.CreateResponse(HttpStatusCode.OK);
-    await ok.WriteStringAsync($"Inserted summary for {userId} into {dbName}.{collectionName}");
-    return ok;
+        // 3️⃣ Schrijf naar Mongo
+        var mongo = new MongoClient(mongoUri);
+        var col = mongo
+            .GetDatabase("fitlog_summary")
+            .GetCollection<BsonDocument>("weekly_summaries");
+
+        var doc = new BsonDocument
+        {
+            { "UserId", userId },
+            { "WeekStartUtc", weekStart },
+            { "WorkoutCount", workoutCount },
+            { "TotalMinutes", totalMinutes },
+            { "UpdatedAtUtc", DateTime.UtcNow }
+        };
+
+        await col.InsertOneAsync(doc);
+
+        var ok = req.CreateResponse(HttpStatusCode.OK);
+        await ok.WriteStringAsync("Summary generated");
+        return ok;
     }
 }
